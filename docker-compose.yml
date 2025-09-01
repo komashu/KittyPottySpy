@@ -3,12 +3,17 @@ services:
     build: .
     image: catvision:cpu
     container_name: catvision
+    depends_on:
+      - framegrab
     environment:
+      - GLOG_minloglevel=2
+      - C10_LOG_LEVEL=ERROR
+      - TORCH_CPP_LOG_LEVEL=ERROR
+      - CAFFE2_LOG_LEVEL=ERROR
+      - PYTHONWARNINGS=ignore::UserWarning
       - OMP_NUM_THREADS=3
       - MKL_NUM_THREADS=3
-      - GLOG_minloglevel=2
       - YOLO_CONFIG_DIR=/app/.ultralytics
-      - PYTHONWARNINGS=ignore::UserWarning
     volumes:
       - ./samples:/app/samples
       - ./frames:/app/frames
@@ -17,12 +22,27 @@ services:
       - ./cats:/app/cats
       - ./meta:/app/meta
       - ./predictions:/app/predictions
-      - catvision_ultra:/app/.ultralytics
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    framegrab:
+      image: jrottenberg/ffmpeg:6-slim
+      container_name: framegrab
+      restart: unless-stopped
+      env_file: .env
+      # Write JPEGs into the same `samples/` bind mount the app uses
+      volumes:
+        - ./samples:/work/samples
+      working_dir: /work
+      command: >
+        -nostdin -rtsp_transport tcp
+        -i "${CAMERA_URL}"
+        -vf fps=${CAP_FPS}
+        -q:v ${JPEG_QUALITY}
+        -f image2 -strftime 1
+        "samples/%Y%m%d_%H%M%S.jpg"
+      logging:
+        driver: "json-file"
+        options:
+          max-size: "10m"
+          max-file: "3"
     deploy:
       resources:
         limits:
