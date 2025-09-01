@@ -3,8 +3,8 @@ services:
     build: .
     image: catvision:cpu
     container_name: catvision
-    depends_on:
-      - framegrab
+    restart: unless-stopped
+    env_file: .env
     environment:
       - GLOG_minloglevel=2
       - C10_LOG_LEVEL=ERROR
@@ -22,31 +22,31 @@ services:
       - ./cats:/app/cats
       - ./meta:/app/meta
       - ./predictions:/app/predictions
-    framegrab:
-      image: jrottenberg/ffmpeg:6-slim
-      container_name: framegrab
-      restart: unless-stopped
-      env_file: .env
-      # Write JPEGs into the same `samples/` bind mount the app uses
-      volumes:
-        - ./samples:/work/samples
-      working_dir: /work
-      command: >
-        -nostdin -rtsp_transport tcp
-        -i "${CAMERA_URL}"
-        -vf fps=${CAP_FPS}
-        -q:v ${JPEG_QUALITY}
-        -f image2 -strftime 1
-        "samples/%Y%m%d_%H%M%S.jpg"
-      logging:
-        driver: "json-file"
-        options:
-          max-size: "10m"
-          max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: '3.5'
+    depends_on:
+      - framegrab
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  framegrab:
+    image: jrottenberg/ffmpeg:6-slim
+    container_name: framegrab
     restart: unless-stopped
-volumes:
-  catvision_ultra:
+    env_file: .env
+    working_dir: /work
+    volumes:
+      - ./samples:/work/samples
+    command: >
+      -nostdin -rtsp_transport tcp
+      -i "${CAMERA_URL}"
+      -vf fps=${CAP_FPS}
+      -q:v ${JPEG_QUALITY}
+      -f image2 -strftime 1
+      "samples/%Y%m%d_%H%M%S.jpg"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
