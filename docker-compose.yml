@@ -1,0 +1,32 @@
+services:
+  catvision:
+    build: .
+    image: catvision:cpu
+    container_name: catvision
+    environment:
+      - OMP_NUM_THREADS=3
+      - MKL_NUM_THREADS=3
+      - GLOG_minloglevel=2
+      - YOLO_CONFIG_DIR=/app/.ultralytics
+      - PYTHONWARNINGS=ignore::UserWarning
+    volumes:
+      - ./samples:/app/samples
+      - ./frames:/app/frames
+      - ./frames_labeled:/app/frames_labeled
+      - ./crops:/app/crops
+      - ./cats:/app/cats
+      - ./meta:/app/meta
+      - ./predictions:/app/predictions
+      - catvision_ultra:/app/.ultralytics
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '3.5'
+    restart: unless-stopped
+volumes:
+  catvision_ultra:

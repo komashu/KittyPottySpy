@@ -1,0 +1,19 @@
+# runtime data
+samples/
+frames/
+frames_labeled/
+crops/
+predictions/
+meta/
+cats/
+
+# tools & caches
+.ultralytics/
+__pycache__/
+*.pyc
+.env
+*.log
+
+# venvs
+.venv/
+catvision-venv/

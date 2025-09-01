@@ -1,0 +1,6 @@
+ultralytics
+opencv-python-headless
+pillow
+scikit-learn
+numpy
+tqdm
