@@ -88,7 +88,7 @@ services:
     container_name: kittyweb
     restart: unless-stopped
     env_file: ./kittyweb/.env
-    working_dir: /app
+    working_dir: /app/kittyweb
     volumes:
       - ./:/app       # let Django see crops/frames/predictions/meta
     ports:
