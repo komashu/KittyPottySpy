@@ -16,6 +16,18 @@ if not SECRET_KEY:
     else:
         raise RuntimeError("Missing required environment variable: DJANGO_SECRET_KEY")
 
+# ---- Development safety warning ----
+if DEBUG and SECRET_KEY == "dev-placeholder-not-secret":
+    import sys
+    print(
+        "⚠️  WARNING: Django is running in DEBUG mode with a placeholder SECRET_KEY.",
+        file=sys.stderr,
+    )
+    print(
+        "   Set DJANGO_SECRET_KEY in your .env and disable DJANGO_DEBUG before deploying to production.",
+        file=sys.stderr,
+    )
+
 ALLOWED_HOSTS = [host.strip() for host in get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()]
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in get_env("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
 
