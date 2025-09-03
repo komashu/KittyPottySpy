@@ -167,31 +167,46 @@ def copy_crop_into_bucket(source_path: Path, predicted_label: str, distance_valu
 
 
 def load_detections() -> Dict[str, List[dict]]:
-    """Map frame filename -> list of detection dicts with bbox and crop_file."""
+    """Map frame filename -> list of detections with bbox and crop_file (robust to bad CSV rows)."""
+    expected_fields = {"frame_file","det_idx","label","conf","x1","y1","x2","y2","crop_file"}
+    detections_by_frame: Dict[str, List[dict]] = {}
+    bad_rows = 0
+
     if not DETECTIONS_CSV_PATH.exists():
         print(f"Warning: {DETECTIONS_CSV_PATH} not found. Skipping frame labeling.")
         return {}
 
-    detections_by_frame: Dict[str, List[dict]] = {}
     with open(DETECTIONS_CSV_PATH, newline="") as csv_file:
-        csv_reader = csv.DictReader(csv_file)
-        for row in csv_reader:
-            if row.get("label") != "cat":
-                continue
-            frame_filename = row["frame_file"]
-            detection_dict = {
-                "det_idx": int(row["det_idx"]),
-                "conf": float(row["conf"]),
-                "x1": int(row["x1"]),
-                "y1": int(row["y1"]),
-                "x2": int(row["x2"]),
-                "y2": int(row["y2"]),
-                "crop_file": row["crop_file"],
-                "pred": None,        # will fill in later
-                "pred_dist": None,   # will fill in later
-            }
-            detections_by_frame.setdefault(frame_filename, []).append(detection_dict)
+        reader = csv.DictReader(csv_file)
+        if not reader.fieldnames or set(reader.fieldnames) != expected_fields:
+            print(f"Note: detections.csv header is {reader.fieldnames}; proceeding anyway.")
 
+        for line_idx, row in enumerate(reader, start=2):  # header is line 1
+            try:
+                if row.get("label") != "cat":
+                    continue
+                frame_name = row["frame_file"]
+                crop_file = row["crop_file"]
+
+                # strong typing / validation
+                det_idx = int(row["det_idx"])
+                conf = float(row["conf"])
+                x1 = int(row["x1"]); y1 = int(row["y1"]); x2 = int(row["x2"]); y2 = int(row["y2"])
+
+                detections_by_frame.setdefault(frame_name, []).append({
+                    "det_idx": det_idx,
+                    "conf": conf,
+                    "x1": x1, "y1": y1, "x2": x2, "y2": y2,
+                    "crop_file": crop_file,
+                    "pred": None,
+                    "pred_dist": None,
+                })
+            except Exception:
+                bad_rows += 1
+                continue
+
+    if bad_rows:
+        print(f"Note: skipped {bad_rows} malformed detection row(s) in {DETECTIONS_CSV_PATH}.")
     return detections_by_frame
 
 
