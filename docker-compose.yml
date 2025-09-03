@@ -61,3 +61,17 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+  django:
+    image: kittyweb:latest
+    build:
+      context: ./kittyweb
+    container_name: kittyweb
+    restart: unless-stopped
+    env_file: ./kittyweb/.env
+    working_dir: /app
+    volumes:
+      - ./:/app            # lets Django read crops/frames/predictions/meta
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - catvision
