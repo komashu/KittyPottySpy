@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 def get_env(name: str, default: str | None = None) -> str | None:
     return os.getenv(name, default)
 
-DEBUG = get_env("DJANGO_DEBUG", "0") in {"1", "true", "True", "yes"}
+DEBUG = get_env("DJANGO_DEBUG", "1") in {"1", "true", "True", "yes"}
 
 SECRET_KEY = get_env("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
