@@ -1,10 +1,45 @@
+version: "3.8"
+
 services:
+  # -------- Frame grabber (ffmpeg) --------
+  framegrab:
+    image: lscr.io/linuxserver/ffmpeg:latest
+    container_name: framegrab
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      - CAP_FPS=0.1           # one frame every 10s
+      - JPEG_QUALITY=5
+    command: >
+      bash -lc '
+        mkdir -p samples &&
+        ffmpeg -hide_banner -loglevel warning -nostdin -y
+          -rtsp_transport tcp
+          -i "rtsps://192.168.1.1:7441/PzgDffWEaFDOsDee?enableSrtp"
+          -vf fps=${CAP_FPS:-0.1},scale=-2:720
+          -qscale:v ${JPEG_QUALITY:-5}
+          samples/%Y%m%d_%H%M%S.jpg
+      '
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    healthcheck:
+      test: ['CMD-SHELL', 'find samples -type f -mmin -5 | grep -q .']
+      interval: 2m
+      timeout: 10s
+      retries: 3
+
+  # -------- Catvision pipeline (PyTorch/YOLO) --------
   catvision:
-    build: .
+    build:
+      context: ./catvision
     image: catvision:cpu
     container_name: catvision
     restart: unless-stopped
-    env_file: .env
+    working_dir: /app
+    volumes:
+      - ./:/app
     environment:
       # logging / warnings
       - GLOG_minloglevel=2
@@ -25,53 +60,41 @@ services:
       - DETECT_CONF=0.20
       - DETECT_IOU=0.50
       - DETECT_TTA=0
-    volumes:
-      - ./samples:/app/samples
-      - ./frames:/app/frames
-      - ./frames_labeled:/app/frames_labeled
-      - ./crops:/app/crops
-      - ./cats:/app/cats
-      - ./meta:/app/meta
-      - ./predictions:/app/predictions
+      - DETECT_PROFILE=auto
+      - DETECT_DAY_CONF=0.25
+      - DETECT_NIGHT_CONF=0.15
+      - MIN_JPEG_BYTES=5000
+    command: >
+      bash -lc '
+        python -u catvision/detect_and_crop_yolo.py &&
+        python -u catvision/identify_cats.py
+      '
     depends_on:
       - framegrab
     logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+    healthcheck:
+      test: ['CMD-SHELL', '[ -f meta/detections.csv ] && find meta/detections.csv -mmin -10 | grep -q .']
+      interval: 3m
+      timeout: 10s
+      retries: 3
 
-  framegrab:
-    image: lscr.io/linuxserver/ffmpeg:latest
-    container_name: framegrab
-    restart: unless-stopped
-    env_file: .env
-    working_dir: /work
-    volumes:
-      - ./samples:/work/samples
-    command: >
-      -nostdin -rtsp_transport tcp
-      -i "${CAMERA_URL}"
-      -vf fps=${CAP_FPS}
-      -q:v ${JPEG_QUALITY}
-      -f image2 -strftime 1
-      "samples/%Y%m%d_%H%M%S.jpg"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # -------- Django reviewer --------
   django:
-    image: kittyweb:latest
     build:
       context: ./kittyweb
+    image: kittyweb:latest
     container_name: kittyweb
     restart: unless-stopped
     env_file: ./kittyweb/.env
     working_dir: /app
     volumes:
-      - ./:/app            # lets Django read crops/frames/predictions/meta
+      - ./:/app       # let Django see crops/frames/predictions/meta
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8000:8000"   # local-only; use SSH tunnel for remote
     depends_on:
       - catvision
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
