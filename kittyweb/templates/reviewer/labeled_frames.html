@@ -1,20 +1,17 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>KittyPottySpy — Labeled Frames</title>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
-    .thumb { width: 100%; border: 1px solid #ccc; border-radius: 10px; object-fit: contain; }
-  </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Labeled Frames — KittyPottySpy{% endblock %}
+{% block nav_labeled_active %}active{% endblock %}
+
+{% block content %}
   <h2>Labeled Frames (newest first)</h2>
   <div class="grid">
-    {% for name in frame_names %}
-      <div><img class="thumb" src="/media/frames_labeled/{{name}}" /></div>
+    {% for frame_name in frame_names %}
+      <div class="card">
+        <img class="thumb" style="width:100%; height:auto" src="/media/frames_labeled/{{ frame_name }}" alt="{{ frame_name }}">
+        <div class="meta">{{ frame_name }}</div>
+      </div>
+    {% empty %}
+      <p>No labeled frames yet.</p>
     {% endfor %}
   </div>
-</body>
-</html>
+{% endblock %}

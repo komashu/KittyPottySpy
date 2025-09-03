@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{% block title %}KittyPottySpy{% endblock %}</title>
+  <style>
+    :root { --gap: 16px; --border:#ddd; --muted:#666; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; color:#111; }
+    header { position: sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--border); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--gap); }
+    .navbar { display:flex; gap:var(--gap); align-items:center; padding: 12px 0; }
+    .navbar a { text-decoration:none; color:#111; padding:6px 10px; border-radius:8px; }
+    .navbar a.active, .navbar a:hover { background:#f2f2f2; }
+    main { padding: 20px 0 40px; }
+    .flash { margin: var(--gap) 0; color: #0a0; }
+    footer { border-top:1px solid var(--border); color:var(--muted); font-size:12px; padding:12px 0; }
+    /* Cards & grid */
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--gap); }
+    .card { border:1px solid var(--border); border-radius:12px; padding:12px; background:#fff; }
+    .row { display:flex; gap:8px; }
+    .thumb { width:160px; height:160px; object-fit:contain; border:1px solid #ccc; border-radius:8px; }
+    .meta { font-size:12px; color:#444; margin-top:6px; }
+    .btn { padding:6px 10px; border-radius:8px; border:1px solid #888; background:#f6f6f6; cursor:pointer; }
+    .btn:hover { background:#eee; }
+    .pred { font-weight:600; }
+    form { margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    input[type=text] { padding:6px 8px; border-radius:6px; border:1px solid #bbb; }
+    /* Pager */
+    .pager { display:flex; gap:12px; align-items:center; margin: 0 0 12px 0; }
+    .pager a { text-decoration:none; padding:4px 8px; border:1px solid var(--border); border-radius:8px; color:#111; }
+    .pager .spacer { color: var(--muted); }
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav class="navbar">
+        <a href="/" class="{% block nav_review_active %}{% endblock %}">Review</a>
+        <a href="/labeled/" class="{% block nav_labeled_active %}{% endblock %}">Labeled Frames</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="flash">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+      KittyPottySpy — local-only reviewer. Keep this behind SSH or add auth before exposing.
+    </footer>
+  </div>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

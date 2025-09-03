@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django.contrib import messages
+from django.core.paginator import Paginator
 from .forms import ReviewActionForm
 from .models import Feedback
 
@@ -51,18 +52,19 @@ def _load_recent_predictions(limit_count: int = 60, offset_count: int = 0) -> Li
         })
     return items
 
-def review_list_view(request: HttpRequest) -> HttpResponse:
-    page_number = int(request.GET.get("page", "1"))
+def review_list_view(request):
     page_size = int(request.GET.get("page_size", "30"))
-    offset_count = max(page_number - 1, 0) * page_size
-    items = _load_recent_predictions(limit_count=page_size, offset_count=offset_count)
-    has_more = len(items) == page_size
-    return render(request, "reviewer/review.html", {
-        "items": items,
-        "page_number": page_number,
-        "page_size": page_size,
-        "has_more": has_more,
-    })
+    page_number = int(request.GET.get("page", "1"))
+
+    all_items = _load_recent_predictions(limit_count=5000, offset_count=0)  # load a big pool
+    paginator = Paginator(all_items, page_size)
+
+    page_obj = paginator.get_page(page_number)  # safe: clamps out-of-range
+
+    context = {
+        "page_obj": page_obj,
+    }
+    return render(request, "reviewer/review.html", context)
 
 def review_action_view(request: HttpRequest) -> HttpResponse:
     if request.method != "POST":
