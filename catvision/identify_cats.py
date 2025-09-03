@@ -23,7 +23,7 @@ os.environ.setdefault("MKL_NUM_THREADS", "3")
 # ----------------------------
 # Paths
 # ----------------------------
-PROJECT_ROOT = Path(".")
+PROJECT_ROOT = Path("..")
 CATS_DIR = PROJECT_ROOT / "cats"                 # gallery: cats/<Name>/*.jpg
 CROPS_DIR = PROJECT_ROOT / "crops"               # detection crops
 FRAMES_DIR = PROJECT_ROOT / "frames"             # annotated frames (boxes only)

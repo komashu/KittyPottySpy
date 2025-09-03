@@ -41,7 +41,7 @@ torch.set_num_threads(int(os.getenv("OMP_NUM_THREADS", "3")))
 SAMPLES_DIR = Path("samples")
 FRAMES_DIR = Path("frames")
 CROPS_DIR = Path("crops")
-META_DIR = Path("meta")
+META_DIR = Path("../meta")
 
 META_DIR.mkdir(exist_ok=True)
 FRAMES_DIR.mkdir(exist_ok=True)

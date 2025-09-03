@@ -2,7 +2,7 @@
 import csv
 from pathlib import Path
 
-META = Path("meta")
+META = Path("../meta")
 SRC = META / "detections.csv"
 DST = META / "detections_clean.csv"
 BACKUP = META / "detections.csv.bak"

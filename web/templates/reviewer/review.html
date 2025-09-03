@@ -1,0 +1,70 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>KittyPottySpy — Review</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; }
+    .row { display: flex; gap: 8px; }
+    .thumb { width: 160px; border-radius: 8px; border: 1px solid #ccc; object-fit: contain; }
+    .meta { font-size: 12px; color: #444; margin-top: 6px; }
+    .btn { padding: 6px 10px; border-radius: 8px; border: 1px solid #888; background: #f6f6f6; cursor: pointer; }
+    .btn:hover { background: #eee; }
+    .pred { font-weight: 600; }
+    form { margin-top: 8px; display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
+    input[type=text] { padding: 6px 8px; border-radius: 6px; border: 1px solid #bbb; }
+    .hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .notice { margin: 8px 0; color: #0a0; }
+  </style>
+</head>
+<body>
+  <div class="hdr">
+    <h2>KittyPottySpy — Review</h2>
+    <div>
+      Page {{page_number}} |
+      {% if page_number>1 %}<a href="/?page={{page_number|add:-1}}&page_size={{page_size}}">Prev</a>{% endif %}
+      {% if has_more %}<a href="/?page={{page_number|add:1}}&page_size={{page_size}}" style="margin-left:12px">Next</a>{% endif %}
+      &nbsp; | <a href="/labeled/">Labeled Frames</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="notice">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="grid">
+    {% for item in items %}
+      <div class="card">
+        <div class="row">
+          <img class="thumb" src="/media/crops/{{item.crop_filename}}" alt="crop"/>
+          {% if item.frame_filename %}
+            <img class="thumb" src="/media/frames_labeled/{{item.frame_filename}}" alt="frame"/>
+          {% endif %}
+        </div>
+        <div class="meta">
+          <div>Crop: {{item.crop_filename}}</div>
+          <div>Predicted: <span class="pred">{{item.predicted_label}}</span>{% if item.distance_value %} (d={{item.distance_value}}){% endif %}</div>
+          {% if item.frame_filename %}<div>Frame: {{item.frame_filename}}</div>{% endif %}
+        </div>
+
+        <form method="post" action="/act/">
+          {% csrf_token %}
+          <input type="hidden" name="crop_filename" value="{{item.crop_filename}}">
+          <input type="hidden" name="predicted" value="{{item.predicted_label}}">
+          <input type="hidden" name="distance_value" value="{{item.distance_value}}">
+          <button class="btn" name="action" value="approve">Approve</button>
+          <button class="btn" name="action" value="unknown">Unknown</button>
+          <span>Override to:</span>
+          <input type="text" name="override_label" placeholder="CatName">
+          <button class="btn" name="action" value="override">Save</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>
