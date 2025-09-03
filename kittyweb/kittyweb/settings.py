@@ -3,15 +3,18 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-def get_env(name: str, default: str | None = None, required: bool = False) -> str:
-    value = os.getenv(name, default)
-    if required and not value:
-        raise RuntimeError(f"Missing required environment variable: {name}")
-    return value
-
-SECRET_KEY = get_env("DJANGO_SECRET_KEY", required=True)
+def get_env(name: str, default: str | None = None) -> str | None:
+    return os.getenv(name, default)
 
 DEBUG = get_env("DJANGO_DEBUG", "0") in {"1", "true", "True", "yes"}
+
+SECRET_KEY = get_env("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        # Safe placeholder for dev/build time; real key must be provided in prod
+        SECRET_KEY = "dev-placeholder-not-secret"
+    else:
+        raise RuntimeError("Missing required environment variable: DJANGO_SECRET_KEY")
 
 ALLOWED_HOSTS = [h.strip() for h in get_env("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in get_env("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()]
