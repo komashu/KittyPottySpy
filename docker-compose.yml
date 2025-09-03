@@ -6,14 +6,25 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      # logging / warnings
       - GLOG_minloglevel=2
       - C10_LOG_LEVEL=ERROR
       - TORCH_CPP_LOG_LEVEL=ERROR
       - CAFFE2_LOG_LEVEL=ERROR
       - PYTHONWARNINGS=ignore::UserWarning
+      - YOLO_CONFIG_DIR=/app/.ultralytics
+
+      # CPU tuning
       - OMP_NUM_THREADS=3
       - MKL_NUM_THREADS=3
-      - YOLO_CONFIG_DIR=/app/.ultralytics
+
+      # detection config
+      - MAX_FRAMES_PER_RUN=300
+      - DETECT_MODEL=yolov8n.pt
+      - DETECT_IMGSZ=512
+      - DETECT_CONF=0.20
+      - DETECT_IOU=0.50
+      - DETECT_TTA=0
     volumes:
       - ./samples:/app/samples
       - ./frames:/app/frames
